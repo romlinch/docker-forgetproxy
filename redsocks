@@ -1,18 +1,34 @@
-#!/usr/bin/env bash
+#!/bin/bash
+set -e
+
 
 iptables_rules() {
     # private ip ranges are not intercepted
-    iptables -t nat -$1 PREROUTING -i docker0 -d 10.0.0.0/8 -j RETURN
-    iptables -t nat -$1 PREROUTING -i docker0 -d 127.0.0.0/8 -j RETURN
-    iptables -t nat -$1 PREROUTING -i docker0 -d 169.254.0.0/16 -j RETURN
-    iptables -t nat -$1 PREROUTING -i docker0 -d 172.16.0.0/12 -j RETURN
-    iptables -t nat -$1 PREROUTING -i docker0 -d 192.168.0.0/16 -j RETURN
-    iptables -t nat -$1 PREROUTING -i docker0 -d 224.0.0.0/4 -j RETURN
-    iptables -t nat -$1 PREROUTING -i docker0 -d 240.0.0.0/4 -j RETURN
+    iptables -t nat -$1 PREROUTING -d 10.0.0.0/8 -j RETURN
+    iptables -t nat -$1 PREROUTING -d 127.0.0.0/8 -j RETURN
+    iptables -t nat -$1 PREROUTING -d 169.254.0.0/16 -j RETURN
+    iptables -t nat -$1 PREROUTING -d 172.16.0.0/12 -j RETURN
+    iptables -t nat -$1 PREROUTING -d 192.168.0.0/16 -j RETURN
+    iptables -t nat -$1 PREROUTING -d 224.0.0.0/4 -j RETURN
+    iptables -t nat -$1 PREROUTING -d 240.0.0.0/4 -j RETURN
 
-    iptables -t nat -$1 PREROUTING -p tcp --dport 80   -i docker0 -j REDIRECT --to 12345 2>/dev/null
-    iptables -t nat -$1 PREROUTING -p tcp --dport 8080 -i docker0 -j REDIRECT --to 12345 2>/dev/null
-    iptables -t nat -$1 PREROUTING -p tcp -i docker0 -j REDIRECT --to 12346 
+    iptables -t nat -$1 OUTPUT -d 10.0.0.0/8 -j RETURN
+    iptables -t nat -$1 OUTPUT -d 127.0.0.0/8 -j RETURN
+    iptables -t nat -$1 OUTPUT -d 169.254.0.0/16 -j RETURN
+    iptables -t nat -$1 OUTPUT -d 172.16.0.0/12 -j RETURN
+    iptables -t nat -$1 OUTPUT -d 192.168.0.0/16 -j RETURN
+    iptables -t nat -$1 OUTPUT -d 224.0.0.0/4 -j RETURN
+    iptables -t nat -$1 OUTPUT -d 240.0.0.0/4 -j RETURN
+    # Allow redsocks to communicate
+    iptables -t nat -$1 OUTPUT -m owner --uid-owner redsocks -j RETURN
+
+    iptables -t nat -$1 PREROUTING -p tcp --dport 80   -j REDIRECT --to 12345 2>/dev/null
+    iptables -t nat -$1 PREROUTING -p tcp --dport 8080 -j REDIRECT --to 12345 2>/dev/null
+    iptables -t nat -$1 PREROUTING -p tcp -j REDIRECT --to 12346
+
+    iptables -t nat -$1 OUTPUT -p tcp --dport 80   -j REDIRECT --to 12345 2>/dev/null
+    iptables -t nat -$1 OUTPUT -p tcp --dport 8080 -j REDIRECT --to 12345 2>/dev/null
+    iptables -t nat -$1 OUTPUT -p tcp -j REDIRECT --to 12346
 
 }
 
@@ -34,7 +50,7 @@ redsocks {
   local_port = $local_port;
 }
 EOF
-) >> /tmp/redsocks.conf
+) >> /tmp/redsocks.conf.generated
 }
 
 parse_ip() {
@@ -59,13 +75,13 @@ interrupted () {
 }
 
 run() {
-    trap interrupted INT
-    trap terminated TERM
 
     if [ -z "$http_proxy" ]; then
         echo "No http_proxy set. Exiting"
         exit 1
     fi
+
+    cp /tmp/redsocks.conf /tmp/redsocks.conf.generated
 
     ip=$(parse_ip $http_proxy)
     port=$(parse_port $http_proxy)
@@ -79,9 +95,9 @@ run() {
     port=$(parse_port $https_proxy)
     append_redsocks_conf "http-connect" $ip $port "12346"
 
+    iptables_rules D
     iptables_rules A
-    /usr/sbin/redsocks -c /tmp/redsocks.conf &
-
+    /usr/sbin/redsocks -c /tmp/redsocks.conf.generated &
     tail -f /dev/null
 }
 
@@ -92,6 +108,9 @@ terminated () {
     stop
     kill -TERM $$
 }
+
+trap "interrupted" SIGINT
+trap "terminated" SIGTERM
 
 case "$1" in
     stop )  stop ;;
