@@ -1,0 +1,10 @@
+redsocks:
+  build: .
+  privileged: true
+  restart: always
+  environment:
+    - http_proxy
+    - https_proxy
+  net: "host"
+  stdin_open: true
+  tty: true
