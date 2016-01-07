@@ -3,8 +3,7 @@ redsocks:
   privileged: true
   restart: always
   environment:
-    - http_proxy
-    - https_proxy
+    - http_proxy=http://proxy9.si.fr.atosorigin.com:8080
   net: "host"
   stdin_open: true
   tty: true
