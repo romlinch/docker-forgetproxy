@@ -1,4 +1,4 @@
-FROM debian:wheezy
+FROM debian:jessie
 
 ENTRYPOINT ["/usr/sbin/redsocks", "-c", "/etc/redsocks.conf"]
 RUN apt-get -q update

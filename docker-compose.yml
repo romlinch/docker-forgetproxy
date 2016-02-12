@@ -1,8 +1,6 @@
 redsocks:
     build: redsocks_docker/.
     net: "host"
-    link:
-      - squid
 
 squid:
     build: squid_docker/.

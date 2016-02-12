@@ -68,9 +68,8 @@ class RedirectContext:
     """ A context to make sure that the iptables rules are removed
     after they are inserted."""
     def __enter__(self):
-        print("Enabling IPtables forwarding: '%s'" % redirect_cmd)
+        print("Enabling IPtables forwarding")
         try:
-            subprocess.check_call(redirect_cmd.split())
             subprocess.check_call(redirect_cmd_return_1.split())
             subprocess.check_call(redirect_cmd_return_2.split())
             subprocess.check_call(redirect_cmd_return_3.split())
@@ -86,13 +85,13 @@ class RedirectContext:
             self.setup = True
         except:
             print("Failed to setup IPTABLES. Did you use --privileged"
-                  " if not you need to run [[%s]]" % redirect_cmd)
+                  " if not you need to run")
             self.setup = False
         return self
 
     def __exit__(self, type, value, traceback):
         if self.setup:
-            print("Disabling IPtables forwarding: '%s'" % remove_redirect_cmd)
+            print("Disabling IPtables forwarding")
             subprocess.check_call(remove_redirect_cmd_return_1.split())
             subprocess.check_call(remove_redirect_cmd_return_2.split())
             subprocess.check_call(remove_redirect_cmd_return_3.split())
