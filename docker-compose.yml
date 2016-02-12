@@ -5,16 +5,16 @@ redsocks:
 squid:
     build: squid_docker/.
     environment:
-        - "DISK_CACHE_SIZE=50000"
-        - "MAX_CACHE_OBJECT=10000"
+        - "DISK_CACHE_SIZE=5000"
+        - "MAX_CACHE_OBJECT=1000"
         # - "SQUID_DIRECTIVES_ONLY=true"
         # - "SQUID_DIRECTIVES='refresh_pattern . 0 0 1 refresh-ims'"
     net: "host"
     ## Uncomment and update /path/to/cache
-    volumes:
-       - /var/cache/squid3:/var/cache/squid3
+    # volumes:
+    #    - /var/cache/squid3:/var/cache/squid3
 
-tproxy:
-    build: iptables_docker/.
-    net: "host"
-    privileged: true
+# netrules:
+#     build: iptables_docker/.
+#     net: "host"
+#     privileged: true

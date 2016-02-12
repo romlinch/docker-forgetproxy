@@ -53,10 +53,7 @@ remove_redirect_cmd_http_1 = redirect_cmd_http_1.replace(' -A ', ' -D ')
 remove_redirect_cmd_http_2 = redirect_cmd_http_2.replace(' -A ', ' -D ')
 remove_redirect_cmd_all_1 = redirect_cmd_all_1.replace(' -A ', ' -D ')
 
-LOCAL_PORT = 12345
-
-
-
+LOCAL_PORT = 3128
 
 def is_port_open(port_num):
     """ Detect if a port is open on localhost"""
