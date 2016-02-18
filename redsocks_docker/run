@@ -1,0 +1,55 @@
+#!/bin/bash
+
+REDSOCKS=104
+SQUID=13
+
+function stop () {
+  echo "Disabling IPtables forwarding"
+  iptables -t nat -D PREROUTING -j TRANSPARENTPROXY
+  iptables -t nat -D PREROUTING -j TRANSPARENTPROXY
+  iptables -t nat -D OUTPUT -j TRANSPARENTPROXY
+  iptables -t nat -D OUTPUT -j TRANSPARENTPROXY
+  iptables -t nat -D OUTPUT -m owner --uid-owner ${REDSOCKS} -j RETURN
+  iptables -t nat -D OUTPUT -m owner --uid-owner ${REDSOCKS} -j RETURN
+  iptables -t nat -D OUTPUT -m owner --uid-owner ${SQUID} -j RETURN
+  iptables -t nat -D OUTPUT -m owner --uid-owner ${SQUID} -j RETURN
+
+  iptables -t nat -F TRANSPARENTPROXY
+  iptables -t nat -X TRANSPARENTPROXY
+  exit 0
+}
+
+function start () {
+  echo "Enabling IPTables forwarding"
+  iptables -t nat -D PREROUTING -j TRANSPARENTPROXY
+  iptables -t nat -D PREROUTING -j TRANSPARENTPROXY
+  iptables -t nat -D OUTPUT -j TRANSPARENTPROXY
+  iptables -t nat -D OUTPUT -j TRANSPARENTPROXY
+  iptables -t nat -F TRANSPARENTPROXY
+  iptables -t nat -X TRANSPARENTPROXY
+  iptables -t nat -N TRANSPARENTPROXY
+
+  iptables -t nat -A TRANSPARENTPROXY -p tcp --dport 43 -j RETURN
+  iptables -t nat -A TRANSPARENTPROXY -p udp --dport 43 -j RETURN
+  iptables -t nat -A TRANSPARENTPROXY -d 10.0.0.0/8 -j RETURN
+  iptables -t nat -A TRANSPARENTPROXY -d 127.0.0.0/8 -j RETURN
+  iptables -t nat -A TRANSPARENTPROXY -d 169.254.0.0/16 -j RETURN
+  iptables -t nat -A TRANSPARENTPROXY -d 172.16.0.0/12 -j RETURN
+  iptables -t nat -A TRANSPARENTPROXY -d 192.168.0.0/16 -j RETURN
+  iptables -t nat -A TRANSPARENTPROXY -d 224.0.0.0/4 -j RETURN
+  iptables -t nat -A TRANSPARENTPROXY -d 240.0.0.0/4 -j RETURN
+
+  iptables -t nat -A TRANSPARENTPROXY -p tcp --dport 80 -j REDIRECT --to 12345
+  iptables -t nat -A TRANSPARENTPROXY -p tcp --dport 8080 -j REDIRECT --to 12345
+  iptables -t nat -A TRANSPARENTPROXY -p tcp -j REDIRECT --to 12346
+
+  iptables -t nat -A PREROUTING -j TRANSPARENTPROXY
+  iptables -t nat -A OUTPUT -m owner --uid-owner ${REDSOCKS} -j RETURN
+  iptables -t nat -A OUTPUT -m owner --uid-owner ${SQUID} -j RETURN
+  iptables -t nat -A OUTPUT -j TRANSPARENTPROXY
+}
+
+trap 'stop' SIGTERM SIGINT
+start
+/usr/sbin/redsocks -c /etc/redsocks.conf &
+while true; do sleep 5; done
