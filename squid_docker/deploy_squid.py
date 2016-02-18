@@ -41,11 +41,15 @@ def main():
     disk_cache_size = os.getenv("DISK_CACHE_SIZE", '5000')
     squid_directives_only = os.getenv("SQUID_DIRECTIVES_ONLY", False)
     arbitrary_squid_directives = os.getenv("SQUID_DIRECTIVES", None)
+    parent_proxy_ip = os.getenv("PROXY_HOST", "proxy9.si.fr.atosorigin.com")
+    parent_proxy_port = os.getenv("PROXY_PORT", 8080)
 
     squid_conf_entries = []
     squid_conf_entries.append('maximum_object_size %s MB' % max_object_size)
     squid_conf_entries.append('cache_dir ufs /var/cache/squid3 %s 16 256' %
                               disk_cache_size)
+    squid_conf_entries.append('cache_peer {0} parent {1} 0 no-query no-digest'.format(parent_proxy_ip,  parent_proxy_port))
+    squid_conf_entries.append('never_direct allow all')
 
     write_mode = 'w' if squid_directives_only else 'a'
     with open("/etc/squid3/squid.conf", write_mode) as conf_fh:

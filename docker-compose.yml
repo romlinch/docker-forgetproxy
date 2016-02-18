@@ -14,7 +14,7 @@ squid:
     # volumes:
     #    - /var/cache/squid3:/var/cache/squid3
 
-# netrules:
-#     build: iptables_docker/.
-#     net: "host"
-#     privileged: true
+netrules:
+    build: iptables_docker/.
+    net: "host"
+    privileged: true
