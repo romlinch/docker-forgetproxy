@@ -41,7 +41,7 @@ def main():
     disk_cache_size = os.getenv("DISK_CACHE_SIZE", '5000')
     squid_directives_only = os.getenv("SQUID_DIRECTIVES_ONLY", False)
     arbitrary_squid_directives = os.getenv("SQUID_DIRECTIVES", None)
-    parent_proxy_ip = os.getenv("PROXY_HOST", "proxy9.si.fr.atosorigin.com")
+    parent_proxy_ip = os.getenv("PROXY_HOST", "55.1.35.230")
     parent_proxy_port = os.getenv("PROXY_PORT", 8080)
 
     squid_conf_entries = []

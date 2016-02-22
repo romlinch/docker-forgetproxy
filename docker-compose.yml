@@ -1,10 +1,5 @@
-redsocks:
-    build: redsocks_docker/.
-    net: "host"
-    privileged: true
-
-squid:
-    build: squid_docker/.
+noproxy:
+    build: .
     environment:
         - "DISK_CACHE_SIZE=5000"
         - "MAX_CACHE_OBJECT=1000"
@@ -14,8 +9,4 @@ squid:
     ## Uncomment and update /path/to/cache
     # volumes:
     #    - /var/cache/squid3:/var/cache/squid3
-
-# netrules:
-#     build: iptables_docker/.
-#     net: "host"
-#     privileged: true
+    privileged: true
