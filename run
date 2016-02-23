@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -x
 REDSOCKS=$(id -u redsocks)
 SQUID=$(id -u proxy)
 
@@ -49,15 +49,32 @@ function start () {
   iptables -t nat -A TRANSPARENTPROXY -p tcp -j REDIRECT --to 12346
 
   iptables -t nat -A PREROUTING -j TRANSPARENTPROXY
-  iptables -t nat -A OUTPUT -m owner --uid-owner ${REDSOCKS} -j RETURN
-  iptables -t nat -A OUTPUT -m owner --uid-owner ${SQUID} -j RETURN
-  iptables -t nat -A OUTPUT -j TRANSPARENTPROXY
+
+  if [[ "${REDIRECT:-docker}" = "all" ]]; then
+    echo "REDIRECT local traffic to proxy"
+    iptables -t nat -A OUTPUT -m owner --uid-owner ${REDSOCKS} -j RETURN
+    iptables -t nat -A OUTPUT -m owner --uid-owner ${SQUID} -j RETURN
+    iptables -t nat -A OUTPUT -j TRANSPARENTPROXY
+  fi
+}
+
+startSquid () {
+  if [[ ! -f /run/squid ]]; then
+    chown -R proxy:proxy /var/cache/squid3
+    echo "maximum_object_size ${MAXIMUM_CACHE_OBJECT:-1024} MB" >> /etc/squid3/squid.conf
+    echo "cache_dir ufs /var/cache/squid3 ${DISK_CACHE_SIZE:-5000} 16 256" >> /etc/squid3/squid.conf
+    echo "cache_peer ${PROXY_HOST:-55.1.35.230} parent ${PROXY_PORT:-8080} 0 no-query no-digest" >> /etc/squid3/squid.conf
+    echo "never_direct allow all" >> /etc/squid3/squid.conf
+    squid3 -z
+    touch /run/squid
+  fi
 }
 
 trap 'stop' SIGTERM SIGINT
 start
 /usr/sbin/redsocks -c /etc/redsocks.conf &
 RED_PID=$!
-/usr/bin/python /tmp/deploy_squid.py &
+startSquid
+squid3 -N &
 SQUID_PID=$!
 while true; do sleep 5; done

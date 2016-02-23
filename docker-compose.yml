@@ -3,6 +3,7 @@ noproxy:
     environment:
         - "DISK_CACHE_SIZE=5000"
         - "MAX_CACHE_OBJECT=1000"
+        - "REDIRECT=all"
         # - "SQUID_DIRECTIVES_ONLY=true"
         # - "SQUID_DIRECTIVES='refresh_pattern . 0 0 1 refresh-ims'"
     net: "host"
